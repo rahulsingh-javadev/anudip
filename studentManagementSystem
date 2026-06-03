@@ -1,0 +1,176 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Scanner; 
+
+
+public class studentManagement {
+
+    static String url = "jdbc:mysql://localhost:3306/StudentManagementSystem";
+    static String username = "root";
+    static String password = "root1234";
+    public static void main(String[] args) {
+        Connection con = null;
+        Scanner sc = new Scanner(System.in);
+
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            con = DriverManager.getConnection(url, username, password);
+            System.out.println("Connected to the database successfully!");
+        } catch (Exception e) {
+            System.out.println("Error: "+e.getMessage());
+        }
+
+        while(true){
+            System.out.println("1 -> Add Student: ");
+            System.out.println("2 -> View Student List: ");
+            System.out.println("3 -> Search Student: ");
+            System.out.println("4 -> Update Student Details: ");
+            System.out.println("5 -> Delete Student Details: ");
+            System.out.println("6 -> Exit Application: ");
+            System.out.print("Enter your choice: ");
+            
+            int choice = sc.nextInt();
+            switch(choice){
+                case 1:
+                addstudent(sc, con);
+                break;
+                case 2:
+                viewstudent(sc, con);
+                break;
+                case 3:
+                searchstudent(sc, con);
+                break;
+                case 4:
+                updatestudent(sc, con);
+                break;
+                case 5:
+                deletestudent(sc, con);
+                break;
+                case 6:
+                break;
+                default:
+                System.out.println("Invalid choice");
+            }
+        }
+    }
+
+    static void  addstudent(Scanner sc , Connection con) {
+        System.out.print("Enter student name: ");
+        String name = sc.next(); 
+        sc.nextLine();
+        System.out.print("Enter student age: ");
+        int age = sc.nextInt();
+        System.out.print("Enter studentID:");
+        int studentID = sc.nextInt();
+        System.out.print("Enter Phone Number: ");
+        double phoneNo = sc.nextDouble();
+
+
+        if(name.isEmpty() || age <= 0 || studentID <= 0 || phoneNo <= 0){
+            System.out.println("Invalid input. Please enter valid student details.");
+            return;
+        }
+
+        try {
+            PreparedStatement ps = con.prepareStatement("INSERT INTO STUDENT (name, age, studentID, phoneNo) VALUES (?, ?, ?, ?)");
+            ps.setString(1, name);
+            ps.setInt(2, age);
+            ps.setInt(3, studentID);
+            ps.setDouble(4, phoneNo);
+            int rowsInserted = ps.executeUpdate();
+            if(rowsInserted > 0){
+                System.out.println("Student added successfully.");
+            } else {
+                System.out.println("Failed to add student. Because Student already exists with ID: " + studentID);
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    static void viewstudent(Scanner sc, Connection con){
+        System.out.println("Student List: ");
+        try{
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM STUDENT");
+                ResultSet rs = ps.executeQuery();
+                while(rs.next()){
+                    System.out.print("Student ID: "+rs.getInt("studentID"));
+                    System.out.print("Name: "+rs.getString("name"));
+                    System.out.print("Age: "+rs.getInt("age"));
+                    System.out.print("Phone Number: "+rs.getDouble("phoneNo"));
+                    System.out.println("-----------------------------");
+                }
+        }catch(Exception e){
+            System.out.println("Error: "+e.getMessage());
+        }
+
+
+    }
+
+    static void searchstudent(Scanner sc, Connection con){
+        System.out.println("Enter student ID to search: ");
+        int studentID = sc.nextInt();
+        try{
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM STUDENT WHERE studentID = ?");
+            ps.setInt(1, studentID);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                System.out.print("Student ID: "+rs.getInt("studentID"));
+                System.out.print("Name: "+rs.getString("name"));
+                System.out.print("Age: "+rs.getInt("age"));
+                System.out.print("Phone Number: "+rs.getDouble("phoneNo"));
+            } else {
+                System.out.print("Student not found with ID: " + studentID);
+            }
+        }catch(Exception e){
+            System.out.println("Error: "+e.getMessage());
+        }
+    }
+
+    static void updatestudent(Scanner sc, Connection con){
+        System.out.println("Enter student ID to update: ");
+        int studentID = sc.nextInt();
+        System.out.println("Enter new student name: ");
+        String name = sc.nextLine();
+        System.out.println("Enter new student age: ");
+        int age = sc.nextInt();
+        System.out.println("Enter new Phone Number: ");
+        double phoneNo = sc.nextDouble();
+
+        try{
+            PreparedStatement ps = con.prepareStatement("UPDATE STUDENT SET name = ?, age = ?, phoneNo = ? WHERE studentID = ?");
+            ps.setString(1, name);
+            ps.setInt(2, age);
+            ps.setDouble(3, phoneNo);
+            ps.setInt(4, studentID);
+            int rowsUpdated = ps.executeUpdate();
+            if(rowsUpdated > 0){
+                System.out.println("Student details updated successfully.");
+            } else {
+                System.out.println("Student not found with ID: " + studentID);
+            }
+        }catch(Exception e){
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    static void deletestudent(Scanner sc, Connection con){
+        System.out.println("Enter student ID to delete: ");
+        int studentID = sc.nextInt();
+        try{
+        PreparedStatement ps = con.prepareStatement("DELETE FROM STUDENT WHERE studentID = ?");
+        ps.setInt(1, studentID);
+        int rowsDeleted = ps.executeUpdate();
+        if(rowsDeleted > 0){
+            System.out.println("Student deleted successfully.");
+        } else {
+            System.out.println("Student not found with ID: " + studentID);
+        }
+        }catch(Exception e){
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+}
